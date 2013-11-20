@@ -3,7 +3,7 @@ bitstamp-python-client
 
 Python package to communicate with bitstamp.net API.
 
-Compatible with Python v2, v3.3 and higher.
+Compatible with Python v2
 
 ## Overview ##
 
@@ -50,8 +50,3 @@ account_balance = bs_client_trading.account_balance()
   u'usd_balance': u'114.64',
   u'usd_available': u'114.64'
 }
-```
-
-### If this code is usable for you, here is my wallet id where you can contribute to my work with few micro BCs: ###
-
-## 159bihAxJTKNsJSvCxYgAHKd8UX7kJugUQ ##
