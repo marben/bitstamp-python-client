@@ -7,16 +7,22 @@ import hashlib
 import sys
 
 class public():
-    def __init__(self, proxydict=None):
+    def __init__(self, rootUrl=None, proxydict=None):
         self.proxydict = proxydict
+        if rootUrl:
+            self.rootUrl = rootUrl
+        else:
+            self.rootUrl = "https://www.bitstamp.net"
+
+        self.session = requests.Session()
 
     def ticker(self):
         """
         Return dictionary
         """
-        r = requests.get("https://www.bitstamp.net/api/ticker/", proxies=self.proxydict)
+        r = self.session.get(self.rootUrl + "/api/ticker/", proxies=self.proxydict)
         if r.status_code == 200:
-            return r.json()
+            return r.text
         else:
             r.raise_for_status()
 
@@ -27,7 +33,7 @@ class public():
         """
         params = {'group': group}
 
-        r = requests.get("https://www.bitstamp.net/api/order_book/", params=params, proxies=self.proxydict)
+        r = self.session.get(self.rootUrl + "/api/order_book/", params=params, proxies=self.proxydict)
         if r.status_code == 200:
             return r.json()
         else:
@@ -39,7 +45,7 @@ class public():
         """
         params = {'timedelta': timedelta_secs}
 
-        r = requests.get("https://www.bitstamp.net/api/transactions/", params=params, proxies=self.proxydict)
+        r = self.session.get(self.rootUrl + "/api/transactions/", params=params, proxies=self.proxydict)
         if r.status_code == 200:
             return r.json()
         else:
@@ -49,7 +55,7 @@ class public():
         """
         Returns simple dictionary {'usd': 'Bitinstant USD reserves'}
         """
-        r = requests.get("https://www.bitstamp.net/api/bitinstant/", proxies=self.proxydict)
+        r = self.session.get(self.rootUrl + "/api/bitinstant/", proxies=self.proxydict)
         if r.status_code == 200:
             return r.json()
         else:
@@ -60,7 +66,7 @@ class public():
         Returns simple dictionary
         {'buy': 'buy conversion rate', 'sell': 'sell conversion rate'}
         """
-        r = requests.get("https://www.bitstamp.net/api/eur_usd/", proxies=self.proxydict)
+        r = self.session.get(self.rootUrl + "/api/eur_usd/", proxies=self.proxydict)
         if r.status_code == 200:
             return r.json()
         else:
@@ -102,7 +108,7 @@ class trading():
          u'usd_available': u'114.64'}
         """
         params = self.get_params()
-        r = requests.post("https://www.bitstamp.net/api/balance/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/balance/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
                 return False, r.json()['error']
@@ -128,7 +134,7 @@ class trading():
         else:
             params['sort'] = "asc"
 
-        r = requests.post("https://www.bitstamp.net/api/user_transactions/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/user_transactions/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
                 return False, r.json()['error']
@@ -142,7 +148,7 @@ class trading():
         Returns JSON list of open orders. Each order is represented as dictionary:
         """
         params = self.get_params()
-        r = requests.post("https://www.bitstamp.net/api/open_orders/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/open_orders/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
                 return False, r.json()['error']
@@ -159,7 +165,7 @@ class trading():
         """
         params = self.get_params()
         params['id'] = order_id
-        r = requests.post("https://www.bitstamp.net/api/cancel_order/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/cancel_order/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if r.text == u'true':
                 return True
@@ -176,7 +182,7 @@ class trading():
         params['amount'] = amount
         params['price'] = price
 
-        r = requests.post("https://www.bitstamp.net/api/buy/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/buy/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
                 return False, r.json()['error']
@@ -193,7 +199,7 @@ class trading():
         params['amount'] = amount
         params['price'] = price
 
-        r = requests.post("https://www.bitstamp.net/api/sell/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/sell/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
                 return False, r.json()['error']
@@ -208,7 +214,7 @@ class trading():
         """
         params = self.get_params()
         params['code'] = code
-        r = requests.post("https://www.bitstamp.net/api/check_code/", data=params,
+        r = self.session.post(self.rootUrl + "/api/check_code/", data=params,
                           proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
@@ -224,7 +230,7 @@ class trading():
         """
         params = self.get_params()
         params['code'] = code
-        r = requests.post("https://www.bitstamp.net/api/redeem_code/", data=params,
+        r = self.session.post(self.rootUrl + "/api/redeem_code/", data=params,
                           proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
@@ -239,7 +245,7 @@ class trading():
         Returns list of withdrawal requests. Each request is represented as dictionary
         """
         params = self.get_params()
-        r = requests.post("https://www.bitstamp.net/api/withdrawal_requests/", data=params,
+        r = self.session.post(self.rootUrl + "/api/withdrawal_requests/", data=params,
                           proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
@@ -257,7 +263,7 @@ class trading():
         params['amount'] = amount
         params['address'] = address
 
-        r = requests.post("https://www.bitstamp.net/api/bitcoin_withdrawal/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/bitcoin_withdrawal/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if r.text == u'true':
                 return True
@@ -271,7 +277,7 @@ class trading():
         Returns bitcoin deposit address as unicode string
         """
         params = self.get_params()
-        r = requests.post("https://www.bitstamp.net/api/bitcoin_deposit_address/", data=params,
+        r = self.session.post(self.rootUrl + "/api/bitcoin_deposit_address/", data=params,
                           proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
@@ -289,7 +295,7 @@ class trading():
         confirmations - number of confirmations
         """
         params = self.get_params()
-        r = requests.post("https://www.bitstamp.net/api/unconfirmed_btc/", data=params,
+        r = self.session.post(self.rootUrl + "/api/unconfirmed_btc/", data=params,
                           proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
@@ -308,7 +314,7 @@ class trading():
         params['address'] = address
         params['currency'] = currency
 
-        r = requests.post("https://www.bitstamp.net/api/ripple_withdrawal/", data=params, proxies=self.proxydict)
+        r = self.session.post(self.rootUrl + "/api/ripple_withdrawal/", data=params, proxies=self.proxydict)
         if r.status_code == 200:
             if r.text == u'true':
                 return True
@@ -322,7 +328,7 @@ class trading():
         Returns ripple deposit address as unicode string
         """
         params = self.get_params()
-        r = requests.post("https://www.bitstamp.net/api/ripple_address/", data=params,
+        r = self.session.post(self.rootUrl + "/api/ripple_address/", data=params,
                           proxies=self.proxydict)
         if r.status_code == 200:
             if 'error' in r.json():
